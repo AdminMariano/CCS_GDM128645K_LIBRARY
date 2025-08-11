@@ -118,7 +118,7 @@ PCB: Eagle, ALTIUM.
 Programacion de microcontroladores PIC en general.
 
 Si te interesa colaborar, aprender más o tienes preguntas, puedes escribirme a:  
-mikrosurfer@gmail.com
+mariano.rochac@pca.edu.co
 
 
 
