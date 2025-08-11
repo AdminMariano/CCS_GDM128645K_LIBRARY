@@ -2,9 +2,7 @@
 #device ADC=10
 #fuses NOWDT, INTRC_IO, NOMCLR, NOPROTECT, NOLVP, PUT, NOCPD
 #use delay(internal=64MHz)
-//#use fast_io(all)
 
-//#include "p18f25k22.c"
 #include "ST7920.c" 
 #include "lcdgrafics.c" 
 
@@ -19,3 +17,4 @@ void main(){
  
    } 
 } 
+
