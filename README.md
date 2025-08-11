@@ -1,5 +1,8 @@
 # GDM128645K GLCD Library for PIC18F25K22 (ST7920 Controller)
 
+![GLCD](images/gdm12864k-1.png) ![GLCD](images/gdm12864k-2.png)
+
+
 A lightweight and educational graphics library for the GDM12864-5K graphical LCD, powered by the ST7920 controller. Designed for bare-metal programming on the PIC18F25K22 using CCS C, with full support for Proteus simulation.
 
 ---
@@ -40,6 +43,7 @@ The ST7920 is a versatile controller for 128x64 GLCDs. It supports both serial a
 ---
 
 ## Proteus Simulation
+![GLCD](images/simulation.png)
 
 This project includes a ready-to-use Proteus `.DSN` file for testing the GLCD interface with the PIC18F25K22. It demonstrates:
 
@@ -49,6 +53,28 @@ This project includes a ready-to-use Proteus `.DSN` file for testing the GLCD in
 - Real-time updates
 
 ---
+# PIN conections
+1  GND (0V)  =
+2  VSS (+5V)=
+3  VO  Power Supply for LCD Drive ** = resistor de 4.7k entre vo y vr   vo o-/\/\/\/-o vr
+4  RS/CS 23 (D/I)RB2 PIN 35 Register selection for parallel mode/Chip enable for serial mode -
+5  RW /SID   Read write selection for parallel mode/Serial data for serial mode-
+6  E/SCL   24  Enable signal for parallel mode/Serial clock -       
+7  DB0 . GND
+8  DB1 . GND
+9  DB2 . GND
+10 DB3 . GND
+11 DB4 . DATO4
+12 DB5 . DATO5
+13 DB6 . DATO6
+14 DB7 . DATO7
+15 PSB Parallel mode/Serial modei     COLOCAR A V+ 5V DC
+16 NC     
+17 /RST     
+18 VR  Power supply for LCD drive   vo o-/\/\/\/-o vr
+19 Power Supply for Backlight(+)
+20 Power Supply for Backlight(-)
+
 
 ## File Structure
 ---
