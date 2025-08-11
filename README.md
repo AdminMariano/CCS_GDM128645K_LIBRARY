@@ -53,27 +53,34 @@ This project includes a ready-to-use Proteus `.DSN` file for testing the GLCD in
 - Real-time updates
 
 ---
-# PIN conections
-1  GND (0V)  =
-2  VSS (+5V)=
-3  VO  Power Supply for LCD Drive ** = resistor de 4.7k entre vo y vr   vo o-/\/\/\/-o vr
-4  RS/CS 23 (D/I)RB2 PIN 35 Register selection for parallel mode/Chip enable for serial mode -
-5  RW /SID   Read write selection for parallel mode/Serial data for serial mode-
-6  E/SCL   24  Enable signal for parallel mode/Serial clock -       
-7  DB0 . GND
-8  DB1 . GND
-9  DB2 . GND
-10 DB3 . GND
-11 DB4 . DATO4
-12 DB5 . DATO5
-13 DB6 . DATO6
-14 DB7 . DATO7
-15 PSB Parallel mode/Serial modei     COLOCAR A V+ 5V DC
-16 NC     
-17 /RST     
-18 VR  Power supply for LCD drive   vo o-/\/\/\/-o vr
-19 Power Supply for Backlight(+)
-20 Power Supply for Backlight(-)
+### Conexiones del GLCD ST7920
+
+1. **GND (0V)**  
+2. **VSS (+5V)**  
+3. **VO – Power Supply for LCD Drive**  
+   Resistor de 4.7k entre VO y VR: `VO o-/\/\/\/-o VR`  
+4. **RS/CS – PIN 35 (RB2)**  
+   Register selection for parallel mode / Chip enable for serial mode  
+5. **RW / SID**  
+   Read/write selection for parallel mode / Serial data for serial mode  
+6. **E / SCL – PIN 24**  
+   Enable signal for parallel mode / Serial clock  
+7. **DB0 – GND**  
+8. **DB1 – GND**  
+9. **DB2 – GND**  
+10. **DB3 – GND**  
+11. **DB4 – DATO4**  
+12. **DB5 – DATO5**  
+13. **DB6 – DATO6**  
+14. **DB7 – DATO7**  
+15. **PSB – Parallel/Serial mode**  
+    Conectar a V+ (5V DC)  
+16. **NC**  
+17. **/RST**  
+18. **VR – Power supply for LCD drive**  
+    `VO o-/\/\/\/-o VR`  
+19. **Power Supply for Backlight (+)**  
+20. **Power Supply for Backlight (-)**
 
 
 ## File Structure
@@ -105,6 +112,13 @@ MIT License. Free to use, modify, and distribute with attribution.
 ## Credits
 
 Developed by Mariano Rocha, educator and embedded systems enthusiast. Focused on empowering learners through clear, hands-on technical resources.
+## 📬 Contacto
+Desarrollo de proyectos electronicos:
+PCB: Eagle, ALTIUM.
+Programacion de microcontroladores PIC en general.
+
+Si te interesa colaborar, aprender más o tienes preguntas, puedes escribirme a:  
+mikrosurfer@gmail.com
 
 
 
