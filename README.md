@@ -1,4 +1,4 @@
-# GDM12864-5K GLCD Library for PIC18F25K22 (ST7920 Controller)
+# GDM128645K GLCD Library for PIC18F25K22 (ST7920 Controller)
 
 A lightweight and educational graphics library for the GDM12864-5K graphical LCD, powered by the ST7920 controller. Designed for bare-metal programming on the PIC18F25K22 using CCS C, with full support for Proteus simulation.
 
