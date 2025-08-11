@@ -99,11 +99,11 @@ const BYTE font5x7[][5] ={0x00, 0x00, 0x00, 0x00, 0x00, // SPACE
                          0x41, 0x41, 0x36, 0x08, 0x00, // }
                          0x02, 0x01, 0x02, 0x04, 0x02};// ~
 //*****************************************************************************
-// Purpose:       Dibujar una línea en una GLCD usando Bresenham's
+// Purpose:       Draw a line on a GLCD using Bresenham's
 //                line drawing algorithm
-// Inputs:        (x1, y1) - coordenada inicial
-//                (x2, y2) - coordenada final
-//                color - ON o OFF
+// Inputs:        (x1, y1) - starting coordinate
+//                (x2, y2) - ending coordinate
+//                color - ON or OFF
 // Dependencies:  glcd_DrawPixel()
 //*****************************************************************************
 void glcd_line(int x1, int y1, int x2, int y2, int1 color)
@@ -169,19 +169,18 @@ void glcd_line(int x1, int y1, int x2, int y2, int1 color)
    }
 }
 //****************************************************************************
-// Propósito:     Dibujar un rectángulo en una pantalla LCD gráfica
-// Inputs:        (x1, y1) - coordenada inicial
-//                (x2, y2) - coordenada final
-//                (fill) Relleno - ON o OFF
-//                Color - ON o  OFF
-// Dependencias:  glcd_DrawPixel(), glcd_line()
-
+// Purpose:       Draw a rectangle on a graphical LCD screen
+// Inputs:        (x1, y1) - starting coordinate
+//                (x2, y2) - ending coordinate
+//                (fill) - Fill ON or OFF
+//                color - ON or OFF
+// Dependencies:  glcd_DrawPixel(), glcd_line()
 //****************************************************************************
 void glcd_rect(int x1, int y1, int x2, int y2, int fill, int1 color)
 {
    if(fill)
    {
-      int y, ymax;                          // Find the y min and max
+      int y, ymax;                          // Find the min and max y
       if(y1 < y2)
       {
          y = y1;
@@ -205,11 +204,11 @@ void glcd_rect(int x1, int y1, int x2, int y2, int fill, int1 color)
    }
 }
 //****************************************************************************
-// Propósito:    Dibujar una barra (línea ancha) en un GLCD
-// Inputs:       (x1, y1) - coordenada inicial
-//               (x2, y2) - coordenada final
-//               width - Número de píxeles de ancho
-//               color - ON o OFF
+// Purpose:       Draw a bar (thick line) on a GLCD
+// Inputs:        (x1, y1) - starting coordinate
+//                (x2, y2) - ending coordinate
+//                width - number of pixels wide
+//                color - ON or OFF
 //****************************************************************************
 void glcd_bar(int x1, int y1, int x2, int y2, int width, int1 color)
 {
@@ -290,12 +289,11 @@ void glcd_bar(int x1, int y1, int x2, int y2, int width, int1 color)
    }
 }
 //****************************************************************************
-// Objetivo:      Dibujar un círculo en una pantalla LCD gráfica
-// Entradas:      (x,y)  - el centro del círculo
-//                radius - el radio del círculo
-//                fill   - YES o NO
-//                color  - ON  o OFF
-
+// Purpose:       Draw a circle on a graphical LCD screen
+// Inputs:        (x,y)  - center of the circle
+//                radius - radius of the circle
+//                fill   - YES or NO
+//                color  - ON or OFF
 //****************************************************************************
 void glcd_circle(int x, int y, int radius, int1 fill, int1 color)
 {
@@ -331,13 +329,12 @@ void glcd_circle(int x, int y, int radius, int1 fill, int1 color)
          P+= 5 + 2*(a++ - b--);
     } while(a <= b);
 }
-//****************************************************************************
 //*****************************************************************************
-// Propósito:     Escribir texto en una pantalla LCD gráfica
-// Entradas:      (x,y) - La coordenada superior izquierda de la primera letra
-//                textptr - Un puntero a una matriz de texto para mostrar
-//                size - El tamaño del texto: 1 = 5x7, 2 = 10x14, ...
-//                color - ON o OFF
+// Purpose:       Write text on a graphical LCD screen
+// Inputs:        (x,y) - top-left coordinate of the first character
+//                textptr - pointer to a text array to display
+//                size - text size: 1 = 5x7, 2 = 10x14, ...
+//                color - ON or OFF
 //*****************************************************************************
 void glcd_text57(int x, int y, char* textptr, int size, int1 color)
 {
@@ -346,14 +343,14 @@ void glcd_text57(int x, int y, char* textptr, int size, int1 color)
 
    for (i = 0; textptr[i] != '\0'; ++i)
    {
-      // Verifica si hay espacio horizontal suficiente
+      // Check if there is enough horizontal space
       if (x + (6 * size) >= 128)
       {
          x = 0;
          y += 8 * size;
       }
 
-      // Dibuja cada columna del carácter
+      // Draw each column of the character
       for (col = 0; col < 5; ++col)
       {
          pixel = font5x7[textptr[i] - ' '][col];
@@ -362,7 +359,7 @@ void glcd_text57(int x, int y, char* textptr, int size, int1 color)
          {
             if (bit_test(pixel, row))
             {
-               // Escalar píxel
+               // Scale pixel
                for (dy = 0; dy < size; ++dy)
                {
                   for (dx = 0; dx < size; ++dx)
@@ -374,7 +371,9 @@ void glcd_text57(int x, int y, char* textptr, int size, int1 color)
          }
       }
 
-      // Espacio entre caracteres
+      // Space between characters
       x += 6 * size;
    }
 }
+
+
