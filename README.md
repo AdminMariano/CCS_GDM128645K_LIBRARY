@@ -120,5 +120,5 @@ Programacion de microcontroladores PIC en general.
 Si te interesa colaborar, aprender más o tienes preguntas, puedes escribirme a:  
 mariano.rochac@pca.edu.co
 
-📺 Mira el video explicativo en [YouTube](https://www.youtube.com/shorts/T8pPV8oMHxY)
+
 
