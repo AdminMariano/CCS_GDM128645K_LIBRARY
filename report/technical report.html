@@ -1,0 +1,273 @@
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>GLCD GDM12864-5 (ST7920) – Report & Examples (PIC18F25K22 + CCS)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    :root{--bg:#0b0f14;--fg:#e8eef6;--muted:#9fb3c8;--accent:#70d6ff;--ok:#7ee787;--warn:#ffdf6e;}
+    html,body{background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    main{max-width:1080px;margin:40px auto;padding:0 20px}
+    h1,h2,h3{line-height:1.2}
+    h1{font-size:2rem;margin:0 0 4px}
+    h2{font-size:1.35rem;margin:32px 0 12px}
+    h3{font-size:1.05rem;margin:22px 0 8px;color:var(--muted)}
+    p,li{color:#dbe7f3}
+    code,kbd,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono","Courier New",monospace}
+    pre{background:#0f1621;border:1px solid #1e293b;border-radius:10px;padding:14px;overflow:auto}
+    pre strong{color:var(--ok);font-weight:600}
+    .grid{display:grid;gap:22px}
+    .grid.cols-2{grid-template-columns:1fr 1fr}
+    .tag{display:inline-block;border:1px solid #263447;border-radius:999px;padding:.15rem .6rem;color:#cfe6ff;margin:.2rem .2rem 0 0}
+    .note{border-left:4px solid var(--accent);background:#0d1722;padding:10px 12px;border-radius:8px}
+    .warn{border-left-color:#ff7b72;background:#1a1010}
+    .ok{border-left-color:var(--ok);background:#0f1a12}
+    a{color:var(--accent);text-decoration:none}
+    hr{border:none;border-top:1px solid #233042;margin:28px 0}
+  </style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>GLCD GDM12864-5 (ST7920) Driver – PIC18F25K22 + CCS</h1>
+  <p class="tag">8-bit Parallel (PORTB)</p>
+  <p class="tag">ST7920</p>
+  <p class="tag">Software Double Buffer (GDRAM)</p>
+  <p class="tag">Hardware-tested</p>
+</header>
+
+<hr/>
+
+<section>
+  <h2>Overview</h2>
+  <p>
+    This driver controls a 128×64 GLCD with the <strong>ST7920</strong> controller in 8-bit parallel mode, using
+    <strong>PORTB</strong> for data and the control signals on <strong>PORTC</strong>:
+    <code>RS→C0</code>, <code>RW→C1</code>, <code>E→C2</code>, <code>RST→C3</code>.
+    The display’s <code>PSB</code> line must be tied to <strong>Vcc</strong> (parallel mode).
+  </p>
+  <p>
+    Rendering happens in user RAM (<code>gdram</code>) and is pushed to the LCD with
+    <code>glcd_update()</code>. This avoids flicker and lets you draw multiple pixels/shapes before refreshing.
+  </p>
+
+  <div class="grid cols-2">
+    <div class="note">
+      <h3>Logical memory map</h3>
+      <ul>
+        <li>Resolution: <code>128×64</code>.</li>
+        <li>Divided into 32 rows (<code>YVAL=32</code>) of 16 words of 16 bits each (<code>XVAL=16</code>).</li>
+        <li>Each 16-bit word represents 16 horizontal pixels.</li>
+        <li><code>glcd_DrawPixel(x,y,...)</code> computes <code>v=y</code>, <code>h=x/16</code>, <code>b=15-(x%16)</code>.</li>
+        <li>For <code>y&gt;31</code> it compensates with <code>x+=128</code> (method used by this driver).</li>
+      </ul>
+    </div>
+    <div class="note ok">
+      <h3>Protocol & timing</h3>
+      <ul>
+        <li>Reads and the busy flag temporarily set <code>TRISB</code> to input.</li>
+        <li><code>delay_us()</code> around <code>E</code> pulses were increased for robustness.</li>
+        <li>Initialization follows the datasheet sequence (double <code>0x30</code>, graphics 0x34/0x36).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Driver API</h2>
+
+  <h3>Initialization</h3>
+  <ul>
+    <li><code>glcd_init_graph()</code>: graphics mode (recommended for drawing). Clears and updates.</li>
+    <li><code>glcd_init_basic()</code>: basic mode (ST7920 internal text).</li>
+  </ul>
+
+  <h3>Low-level access</h3>
+  <ul>
+    <li><code>glcd_instruction(uint8)</code>, <code>glcd_data(uint8)</code>: send to LCD.</li>
+    <li><code>glcd_readByte(address)</code>: read (respects TRISB).</li>
+    <li><code>glcd_check_busy()</code>: waits until BF=0 (PIN_B7).</li>
+  </ul>
+
+  <h3>RAM raster & refresh</h3>
+  <ul>
+    <li><code>glcd_DrawPixel(int8 x,int8 y,int1 color)</code>: draws into <code>gdram</code> and sets <code>refresh=TRUE</code>.</li>
+    <li><code>glcd_fillScreen(ON|OFF)</code>: fills GDRAM with 1 or 0; sets <code>refresh=TRUE</code>.</li>
+    <li><code>glcd_update()</code>: dumps the entire GDRAM to the LCD (when <code>refresh==TRUE</code>).</li>
+  </ul>
+
+  <div class="note warn">
+    <strong>Important:</strong> Drawing operations only modify user memory.
+    Nothing appears on the LCD until you call <code>glcd_update()</code>. You can batch many draws and update once.
+  </div>
+</section>
+
+<section>
+  <h2>Minimal example (init + pixel + clear)</h2>
+  <pre><code>// &lt;main.c&gt; – CCS C (minimal example)
+// Adjust fuses/clock to your project
+#include &lt;18F25K22.h&gt;
+#device ADC=10
+#fuses NOWDT, INTRC_IO, NOMCLR, NOLVP, PUT, NOCPD
+#use delay(internal=64MHz)
+
+// Include your driver file as shared
+#include "st7920_driver.c"   // rename to your actual filename
+
+void main(void)
+{
+   glcd_init_graph();        // Graphics mode
+   glcd_fillScreen(OFF);     // Clear GDRAM (off)
+   glcd_update();            // Refresh LCD
+
+   // Draw a pixel at (10,10)
+   glcd_DrawPixel(10, 10, ON);
+   glcd_update();            // Now it shows!
+
+   while(TRUE) { }
+}</code></pre>
+</section>
+
+<section>
+  <h2>Example: draw a horizontal line and a hollow rectangle</h2>
+  <p>Since the driver exposes <code>DrawPixel</code>, here are simple helpers for basic shapes:</p>
+  <pre><code>// Simple helpers based on DrawPixel
+void glcd_hline(int x1, int x2, int y, int1 c){
+   int x; if(x2&lt;x1){int t=x1; x1=x2; x2=t;}
+   for(x=x1;x&lt;=x2;x++) glcd_DrawPixel(x,y,c);
+}
+void glcd_vline(int x, int y1, int y2, int1 c){
+   int y; if(y2&lt;y1){int t=y1; y1=y2; y2=t;}
+   for(y=y1;y&lt;=y2;y++) glcd_DrawPixel(x,y,c);
+}
+void glcd_rect_hollow(int x1,int y1,int x2,int y2,int1 c){
+   glcd_hline(x1,x2,y1,c);
+   glcd_hline(x1,x2,y2,c);
+   glcd_vline(x1,y1,y2,c);
+   glcd_vline(x2,y1,y2,c);
+}
+
+// Usage
+glcd_fillScreen(OFF);
+glcd_hline(5, 122, 10, ON);
+glcd_rect_hollow(20, 20, 100, 50, ON);
+glcd_update();</code></pre>
+</section>
+
+<section>
+  <h2>Example: scalable 5×7 text (if you already have <code>font5x7[]</code>)</h2>
+  <p>If your project includes <code>font5x7</code> and the <code>glcd_text57()</code> routine (the one you shared), use it like this:</p>
+  <pre><code>extern const unsigned int8 font5x7[][5];
+void glcd_text57(int x,int y,char* text,int size,int1 color); // your implementation
+
+glcd_fillScreen(OFF);
+glcd_text57(2, 2, "HELLO", 1, ON);   // 5x7
+glcd_text57(2, 14, "WORLD", 2, ON);  // 10x14
+glcd_text57(2, 32, "GLCD", 3, ON);   // 15x21 (tripled)
+glcd_update();</code></pre>
+</section>
+
+<section>
+  <h2>Example: smooth animation (no flicker)</h2>
+  <p>Draw several things and refresh once per frame:</p>
+  <pre><code>int x = 5, y = 24, dx = 1;
+
+while(TRUE){
+   glcd_fillScreen(OFF);                 // clear backbuffer (GDRAM)
+   glcd_rect_hollow(x, y, x+20, y+10, ON);
+   // ... (draw more items if needed)
+   glcd_update();                        // single refresh
+
+   x += dx;
+   if(x&lt;=0 || x+20&gt;=127) dx = -dx;
+   delay_ms(30);
+}</code></pre>
+</section>
+
+<section>
+  <h2>Best practices & electrical notes</h2>
+  <ul>
+    <li><strong>Stable power</strong>: decouple with 100 nF near both LCD and PIC; add 10 µF on the 5 V rail.</li>
+    <li><strong>RST (C3)</strong>: the driver asserts reset on startup; add a pull-up (~10 kΩ) if your board requires it.</li>
+    <li><strong>Floating inputs</strong>: if you use keys/inputs, ensure pull-ups/pull-downs to avoid noise causing hangs.</li>
+    <li><strong>Timing</strong>: if you raise the clock or change PIC, keep or slightly increase <code>delay_us()</code> around <code>E</code>.</li>
+    <li><strong>Refresh</strong>: call <code>glcd_update()</code> only after finishing a drawing “batch”; reduces flicker and bus traffic.</li>
+    <li><strong>Compatibility</strong>: <code>PSB</code> to Vcc (parallel); if using ST7920 serial mode, this driver does not apply.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Quick pin & macro table</h2>
+  <pre><code>// Control signals (PORTC)
+#define rs  PIN_C0   // Register Select
+#define rw  PIN_C1   // Read/Write
+#define e   PIN_C2   // Enable
+#define rst PIN_C3   // Reset
+
+// Data (PORTB, D0..D7)
+output_b(value);     // Write 8 bits
+input_b();           // Read 8 bits
+set_tris_b(mask);    // Port direction (1=input)
+
+/* Suggested wiring:
+   ST7920 D0..D7  &lt;—&gt; PIC PORTB RB0..RB7
+   ST7920 RS      &lt;—&gt; PIC RC0
+   ST7920 RW      &lt;—&gt; PIC RC1
+   ST7920 E       &lt;—&gt; PIC RC2
+   ST7920 RST     &lt;—&gt; PIC RC3
+   ST7920 PSB     —&gt;  Vcc (parallel)
+   Vdd/Vss/VO/LED as per module
+*/</code></pre>
+</section>
+
+<section>
+  <h2>Project template (complete main)</h2>
+  <pre><code>#include &lt;18F25K22.h&gt;
+#device ADC=10
+#fuses NOWDT, INTRC_IO, NOMCLR, NOLVP, PUT, NOCPD
+#use delay(internal=64MHz)
+
+#include "st7920_driver.c"   // paste the driver file here
+
+// Helpers (optional)
+void glcd_hline(int x1,int x2,int y,int1 c){int x; if(x2&lt;x1){int t=x1;x1=x2;x2=t;} for(x=x1;x&lt;=x2;x++) glcd_DrawPixel(x,y,c);}
+void glcd_vline(int x,int y1,int y2,int1 c){int y; if(y2&lt;y1){int t=y1;y1=y2;y2=t;} for(y=y1;y&lt;=y2;y++) glcd_DrawPixel(x,y,c);}
+void glcd_rect_hollow(int x1,int y1,int x2,int y2,int1 c){glcd_hline(x1,x2,y1,c);glcd_hline(x1,x2,y2,c);glcd_vline(x1,y1,y2,c);glcd_vline(x2,y1,y2,c);}
+
+void main(void)
+{
+   glcd_init_graph();            // Enter graphics mode
+   glcd_fillScreen(OFF);         // Clear
+   glcd_update();
+
+   // Demo: frame and cross
+   glcd_rect_hollow(0,0,127,63,ON);
+   glcd_hline(0,127,32,ON);
+   glcd_vline(64,0,63,ON);
+   glcd_update();
+
+   while(TRUE){ /* Your app here */ }
+}</code></pre>
+</section>
+
+<hr/>
+
+<section>
+  <h2>Troubleshooting</h2>
+  <ul>
+    <li><strong>Screen clears after a while</strong>: check power and noise; add pull-ups where needed; keep delays and avoid calling <code>update()</code> in ultra-tight loops without need.</li>
+    <li><strong>Blank screen</strong>: verify <code>PSB→Vcc</code>, init order (double 0x30), and data lines D0–D7 to PORTB.</li>
+    <li><strong>Inverted text/bitmap</strong>: validate your array generator (MSB-first) and bit direction in <code>glcd_DrawPixel()</code> (<code>b = 15 - (x%16)</code>).</li>
+  </ul>
+</section>
+
+<footer style="margin:40px 0 20px;color:var(--muted)">
+  <p>Document generated for the final GDM12864-5 (ST7920) driver with PIC18F25K22 and CCS C.</p>
+</footer>
+
+</main>
+</body>
+</html>
+```
