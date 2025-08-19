@@ -82,6 +82,8 @@ This project includes a ready-to-use Proteus `.DSN` file for testing the GLCD in
 19. **Power Supply for Backlight (+)**  
 20. **Power Supply for Backlight (-)**
 
+## more info
+https://adminmariano.github.io/CCS_GDM128645K_LIBRARY/
 
 ## File Structure
 ---
